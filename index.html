@@ -1,1 +1,364 @@
-<!DOCTYPE html> <html lang="pt-BR"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Gerador de API ClouDDy</title> <style> :root { color-scheme: dark; font-family: Arial, Helvetica, sans-serif; background: #0b1020; color: #f3f4f6; } * { box-sizing: border-box; } body { min-height: 100vh; margin: 0; padding: 40px 16px; background: radial-gradient(circle at top left, #172554 0, transparent 38%), #0b1020; } .container { width: min(760px, 100%); margin: 0 auto; } header { margin-bottom: 24px; } .badge { display: inline-block; margin-bottom: 12px; padding: 6px 10px; border: 1px solid #334155; border-radius: 999px; color: #93c5fd; font-size: 12px; letter-spacing: 0.08em; } h1 { margin: 0 0 8px; font-size: clamp(28px, 5vw, 38px); } h1 span { color: #60a5fa; } header p, .hint, .output-subtitle { color: #aab4c5; } .panel, .output-card { border: 1px solid #273449; border-radius: 16px; background: rgba(17, 24, 39, 0.92); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2); } .panel { padding: 24px; } .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; } .field { min-width: 0; } .field.full { grid-column: 1 / -1; } label { display: block; margin-bottom: 8px; font-weight: 700; } input { width: 100%; min-width: 0; padding: 12px 13px; border: 1px solid #3b475a; border-radius: 10px; outline: none; background: #0b1220; color: #f3f4f6; font-size: 15px; } input:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15); } .password-wrapper { display: flex; } .password-wrapper input { border-radius: 10px 0 0 10px; } button { border: 0; border-radius: 10px; cursor: pointer; font-weight: 700; } .show-password { padding: 0 14px; border: 1px solid #3b475a; border-left: 0; border-radius: 0 10px 10px 0; background: #1e293b; color: #e5e7eb; } .generate-button { width: 100%; margin-top: 22px; padding: 13px 16px; background: #2563eb; color: white; font-size: 15px; } .generate-button:hover { background: #1d4ed8; } .hint { display: block; margin-top: 8px; font-size: 13px; } .results { margin-top: 28px; } .results-title { margin: 0 0 14px; font-size: 20px; } .output-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; } .output-card { min-width: 0; padding: 18px; } .output-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; } .output-header h2 { margin: 0 0 4px; font-size: 18px; } .output-subtitle { margin: 0; font-size: 13px; } .copy-button { padding: 9px 12px; background: #263449; color: #f3f4f6; } .copy-button:hover:not(:disabled) { background: #334155; } .copy-button:disabled { cursor: not-allowed; opacity: 0.45; } .output-field { font-family: Consolas, Monaco, monospace; font-size: 13px; } .status { min-height: 20px; margin: 14px 2px 0; color: #aab4c5; font-size: 14px; } .status.error { color: #fca5a5; } .notice { margin-top: 20px; padding: 14px 16px; border: 1px solid #334155; border-radius: 12px; background: rgba(15, 23, 42, 0.75); color: #cbd5e1; font-size: 13px; line-height: 1.5; } @media (max-width: 600px) { body { padding-top: 24px; } .form-grid, .output-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } .panel { padding: 18px; } } </style> </head> <body> <main class="container"> <header> <span class="badge">GERADOR LOCAL</span> <h1>Gerador de API <span>ClouDDy</span></h1> <p>Informe os dados e gere os formatos de streaming TS e HLS.</p> </header> <section class="panel"> <form id="generatorForm"> <div class="form-grid"> <div class="field"> <label for="username">Username</label> <input id="username" type="text" placeholder="Seu usuário" autocomplete="off" required > </div> <div class="field"> <label for="password">Password</label> <div class="password-wrapper"> <input id="password" type="password" placeholder="Sua senha" autocomplete="new-password" required > <button class="show-password" id="togglePassword" type="button" aria-pressed="false" > Mostrar </button> </div> </div> <div class="field full"> <label for="server">Servidor</label> <input id="server" type="text" placeholder="exemplo.com:8080" autocomplete="off" required > <small class="hint"> Informe o servidor como foi fornecido, incluindo a porta se houver. </small> </div> </div> <button class="generate-button" type="submit">Gerar links</button> </form> </section> <section class="results" aria-label="Resultados gerados"> <h2 class="results-title">Resultados</h2> <div class="output-grid"> <article class="output-card"> <div class="output-header"> <div> <h2>TS</h2> <p class="output-subtitle">MPEG-TS</p> </div> <button class="copy-button" type="button" data-target="tsOutput" data-name="TS" disabled > Copiar </button> </div> <input class="output-field" id="tsOutput" type="text" readonly aria-label="Link TS gerado" placeholder="O link TS aparecerá aqui" > </article> <article class="output-card"> <div class="output-header"> <div> <h2>HLS</h2> <p class="output-subtitle">M3U8</p> </div> <button class="copy-button" type="button" data-target="hlsOutput" data-name="HLS" disabled > Copiar </button> </div> <input class="output-field" id="hlsOutput" type="text" readonly aria-label="Link HLS gerado" placeholder="O link HLS aparecerá aqui" > </article> </div> <p class="status" id="status" role="status" aria-live="polite"></p> </section> <div class="notice"> <strong>Privacidade:</strong> este gerador apenas monta os textos no navegador; não valida a conta nem se conecta ao servidor. Os links gerados contêm seu usuário e senha, então evite compartilhá-los publicamente. </div> </main> <script> const form = document.getElementById("generatorForm"); const usernameInput = document.getElementById("username"); const passwordInput = document.getElementById("password"); const serverInput = document.getElementById("server"); const tsOutput = document.getElementById("tsOutput"); const hlsOutput = document.getElementById("hlsOutput"); const status = document.getElementById("status"); const copyButtons = [...document.querySelectorAll(".copy-button")]; form.addEventListener("submit", (event) => { event.preventDefault(); const username = usernameInput.value.trim(); const password = passwordInput.value; const server = serverInput.value.trim().replace(/\/+$/, ""); if (!username || !password.trim() || !server) { status.textContent = "Preencha Username, Password e Servidor."; status.classList.add("error"); return; } tsOutput.value = `xc:${username}:${password}@${server}/streaming=mpegts`; hlsOutput.value = `xc:${username}:${password}@${server}/streaming=m3u8`; copyButtons.forEach((button) => { button.disabled = false; }); status.classList.remove("error"); status.textContent = "Links gerados. Os dados não foram enviados a nenhum servidor."; }); document.getElementById("togglePassword").addEventListener("click", (event) => { const button = event.currentTarget; const showing = passwordInput.type === "text"; passwordInput.type = showing ? "password" : "text"; button.textContent = showing ? "Mostrar" : "Ocultar"; button.setAttribute("aria-pressed", String(!showing)); }); function fallbackCopy(text) { const temporaryInput = document.createElement("textarea"); temporaryInput.value = text; temporaryInput.setAttribute("readonly", ""); temporaryInput.style.position = "fixed"; temporaryInput.style.left = "-9999px"; document.body.appendChild(temporaryInput); temporaryInput.select(); const copied = document.execCommand("copy"); temporaryInput.remove(); return copied; } async function copyOutput(targetId, name) { const output = document.getElementById(targetId); if (!output.value) return; try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(output.value); } else if (!fallbackCopy(output.value)) { throw new Error("Falha ao copiar"); } status.classList.remove("error"); status.textContent = `Link ${name} copiado.`; } catch { output.focus(); output.select(); status.classList.add("error"); status.textContent = "Não foi possível copiar automaticamente. Selecione o texto e copie manualmente."; } } copyButtons.forEach((button) => { button.addEventListener("click", () => { copyOutput(button.dataset.target, button.dataset.name); }); }); [usernameInput, passwordInput, serverInput].forEach((input) => { input.addEventListener("input", () => { tsOutput.value = ""; hlsOutput.value = ""; copyButtons.forEach((button) => { button.disabled = true; }); status.textContent = ""; status.classList.remove("error"); }); }); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador ClouDDy</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 32px 16px;
+      background: #0b1020;
+      color: #f3f4f6;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    main {
+      width: min(760px, 100%);
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .subtitulo,
+    .ajuda {
+      color: #aab4c5;
+    }
+
+    .painel {
+      margin-top: 24px;
+      padding: 24px;
+      border: 1px solid #29364a;
+      border-radius: 14px;
+      background: #111827;
+    }
+
+    .campos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .campo-servidor {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #3b475a;
+      border-radius: 8px;
+      outline: none;
+      background: #0b1220;
+      color: #f3f4f6;
+      font-size: 15px;
+    }
+
+    input:focus {
+      border-color: #60a5fa;
+    }
+
+    .senha-linha {
+      display: flex;
+    }
+
+    .senha-linha input {
+      border-radius: 8px 0 0 8px;
+    }
+
+    .mostrar-senha {
+      padding: 0 12px;
+      border: 1px solid #3b475a;
+      border-left: 0;
+      border-radius: 0 8px 8px 0;
+      background: #263449;
+      color: white;
+      cursor: pointer;
+    }
+
+    .ajuda {
+      display: block;
+      margin-top: 7px;
+      font-size: 13px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .gerar {
+      width: 100%;
+      margin-top: 22px;
+      padding: 13px;
+      background: #2563eb;
+      color: white;
+      font-size: 15px;
+    }
+
+    .gerar:hover {
+      background: #1d4ed8;
+    }
+
+    .resultados {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .resultado {
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid #29364a;
+      border-radius: 12px;
+      background: #111827;
+    }
+
+    .resultado-topo {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .resultado h2 {
+      margin: 0;
+    }
+
+    .copiar {
+      padding: 9px 12px;
+      background: #263449;
+      color: white;
+    }
+
+    .copiar:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .saida {
+      font-family: Consolas, Monaco, monospace;
+      font-size: 13px;
+    }
+
+    #status {
+      min-height: 20px;
+      color: #aab4c5;
+    }
+
+    #status.erro {
+      color: #fca5a5;
+    }
+
+    .aviso {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid #29364a;
+      border-radius: 10px;
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 600px) {
+      .campos,
+      .resultados {
+        grid-template-columns: 1fr;
+      }
+
+      .campo-servidor {
+        grid-column: auto;
+      }
+
+      .painel {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Gerador de API ClouDDy</h1>
+    <p class="subtitulo">Preencha os dados para gerar os formatos TS e HLS.</p>
+
+    <section class="painel">
+      <form id="formulario">
+        <div class="campos">
+          <div>
+            <label for="username">Username</label>
+            <input id="username" type="text" required autocomplete="off">
+          </div>
+
+          <div>
+            <label for="password">Password</label>
+            <div class="senha-linha">
+              <input id="password" type="password" required autocomplete="new-password">
+              <button class="mostrar-senha" id="mostrarSenha" type="button">
+                Mostrar
+              </button>
+            </div>
+          </div>
+
+          <div class="campo-servidor">
+            <label for="servidor">Servidor</label>
+            <input
+              id="servidor"
+              type="text"
+              placeholder="exemplo.com:8080"
+              required
+              autocomplete="off"
+            >
+            <small class="ajuda">
+              Informe o domínio ou IP e a porta, sem protocolo ou caminho.
+            </small>
+          </div>
+        </div>
+
+        <button class="gerar" type="submit">Gerar links</button>
+      </form>
+    </section>
+
+    <section class="resultados" aria-label="Links gerados">
+      <article class="resultado">
+        <div class="resultado-topo">
+          <h2>TS</h2>
+          <button
+            class="copiar"
+            type="button"
+            data-target="saidaTS"
+            data-nome="TS"
+            disabled
+          >
+            Copiar
+          </button>
+        </div>
+        <input class="saida" id="saidaTS" type="text" readonly placeholder="Link TS">
+      </article>
+
+      <article class="resultado">
+        <div class="resultado-topo">
+          <h2>HLS</h2>
+          <button
+            class="copiar"
+            type="button"
+            data-target="saidaHLS"
+            data-nome="HLS"
+            disabled
+          >
+            Copiar
+          </button>
+        </div>
+        <input class="saida" id="saidaHLS" type="text" readonly placeholder="Link HLS">
+      </article>
+    </section>
+
+    <p id="status" role="status" aria-live="polite"></p>
+
+    <div class="aviso">
+      Os links incluem seu usuário e senha. Evite compartilhá-los publicamente.
+      Os dados são usados apenas no navegador e não são enviados a um servidor.
+    </div>
+  </main>
+
+  <script>
+    const formulario = document.getElementById("formulario");
+    const username = document.getElementById("username");
+    const password = document.getElementById("password");
+    const servidor = document.getElementById("servidor");
+    const saidaTS = document.getElementById("saidaTS");
+    const saidaHLS = document.getElementById("saidaHLS");
+    const status = document.getElementById("status");
+    const botoesCopiar = document.querySelectorAll(".copiar");
+
+    formulario.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const usuario = username.value.trim();
+      const senha = password.value;
+      const host = servidor.value.trim().replace(/\/+$/, "");
+
+      if (!usuario || !senha || !host) {
+        status.textContent = "Preencha Username, Password e Servidor.";
+        status.classList.add("erro");
+        return;
+      }
+
+      saidaTS.value = `xc://${usuario}:${senha}@${host}/streaming=mpegts`;
+      saidaHLS.value = `xc://${usuario}:${senha}@${host}/streaming=m3u8`;
+
+      botoesCopiar.forEach((botao) => {
+        botao.disabled = false;
+      });
+
+      status.textContent = "Links gerados.";
+      status.classList.remove("erro");
+    });
+
+    document.getElementById("mostrarSenha").addEventListener("click", (event) => {
+      const botao = event.currentTarget;
+      const visivel = password.type === "text";
+
+      password.type = visivel ? "password" : "text";
+      botao.textContent = visivel ? "Mostrar" : "Ocultar";
+    });
+
+    async function copiarLink(botao) {
+      const campo = document.getElementById(botao.dataset.target);
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(campo.value);
+        } else {
+          campo.focus();
+          campo.select();
+
+          if (!document.execCommand("copy")) {
+            throw new Error("Falha ao copiar");
+          }
+        }
+
+        status.textContent = `Link ${botao.dataset.nome} copiado.`;
+        status.classList.remove("erro");
+      } catch {
+        campo.focus();
+        campo.select();
+        status.textContent = "Não foi possível copiar automaticamente. Copie o texto selecionado.";
+        status.classList.add("erro");
+      }
+    }
+
+    botoesCopiar.forEach((botao) => {
+      botao.addEventListener("click", () => copiarLink(botao));
+    });
+
+    [username, password, servidor].forEach((campo) => {
+      campo.addEventListener("input", () => {
+        saidaTS.value = "";
+        saidaHLS.value = "";
+        botoesCopiar.forEach((botao) => {
+          botao.disabled = true;
+        });
+        status.textContent = "";
+      });
+    });
+  </script>
+</body>
+</html>
